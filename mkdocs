@@ -1,0 +1,46 @@
+---
+- name: Install mkdocs
+  hosts: all
+  become: true
+  tasks:
+    - name: Create custom directory for installing mkdocs
+      file:
+        path: /az/ua000616/mkdocs
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+    - name: Install EPEL repository
+      yum:
+        name: epel-release
+        state: present
+    - name: Install required packages for mkdocs
+      yum:
+        name:
+          - firewalld
+          - python38
+          - python38-pip
+        state: present
+    - name: Install mkdocs
+      pip:
+        name: 
+          - mkdocs==1.3.1
+          - mkdocs-material==8.2.11
+          - Pygments==2.14.0
+        state: present
+        executable: /az/ua000616/mkdocs/bin/pip3.8
+    - name: Verify MkDocs installation
+      command: /az/ua000616/mkdocs/bin/mkdocs --version
+      become: true
+    - name: Add firewall rule for port 8000
+      firewalld:
+        port: "8000/tcp"
+        permanent: true
+        state: enabled
+        zone: public
+    - name: Run MkDocs
+      command: mkdocs serve --dev-addr=192.168.0.111:8000
+      become: true
+    - name: Check MkDocs running
+      command: curl http://192.168.0.111:8000
+      become: true
